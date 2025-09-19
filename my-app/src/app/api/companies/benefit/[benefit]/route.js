@@ -1,16 +1,13 @@
 // app/api/companies/benefit/[benefit]/route.js
-import clientPromise from '../../../../lib/mongodb';
 import { NextResponse } from 'next/server';
+import { connectDB } from '../../../../lib/mongodb';
 
 export async function GET(request, { params }) {
   try {
     const { benefit } = params;
+    const collection = await connectDB();
 
-    const client = await clientPromise;
-    const db = client.db();
-    const coll = db.collection("Companies");
-
-    const items = await coll.find({
+    const items = await collection.find({
       benefits: { $regex: new RegExp(benefit, 'i') }
     }).toArray();
 

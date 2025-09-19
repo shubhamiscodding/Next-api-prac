@@ -1,24 +1,24 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '../../mongodb/route.js';
+import { connectDB } from '../../../lib/mongodb';
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    
+
     if (!Array.isArray(body)) {
       return NextResponse.json(
         { error: 'Body must be an array of companies' },
         { status: 400 }
       );
     }
-    
+
     const collection = await connectDB();
-    
+
     const newCompanies = body.map(company => {
       if (!company.name || !company.location) {
         throw new Error('Each company must have name and location');
       }
-      
+
       return {
         ...company,
         createdAt: new Date().toISOString(),
@@ -27,19 +27,22 @@ export async function POST(request) {
         hiringCriteria: company.hiringCriteria || {}
       };
     });
-    
+
     const result = await collection.insertMany(newCompanies);
-    
-    // Convert ObjectIds to strings for JSON serialization
+
+    // Convert inserted ObjectIds to string
     const insertedCompanies = newCompanies.map((company, index) => ({
       ...company,
-      _id: result.insertedIds[index].toString()
+      _id: Object.values(result.insertedIds)[index].toString()
     }));
-    
-    return NextResponse.json({
-      inserted: insertedCompanies.length,
-      companies: insertedCompanies
-    }, { status: 201 });
+
+    return NextResponse.json(
+      {
+        insertedCount: insertedCompanies.length, // ✅ fixed key name
+        companies: insertedCompanies
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error in POST /api/companies/bulk:", error);
     return NextResponse.json(

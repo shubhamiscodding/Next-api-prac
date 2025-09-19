@@ -1,6 +1,6 @@
 // app/api/companies/count/route.js
-import clientPromise from '../../../lib/mongodb';
 import { NextResponse } from 'next/server';
+import { connectDB } from '../../../lib/mongodb';
 
 export async function GET(request) {
   try {
@@ -9,16 +9,14 @@ export async function GET(request) {
     const location = url.searchParams.get('location');
     const skill = url.searchParams.get('skill');
 
-    const client = await clientPromise;
-    const db = client.db();
-    const coll = db.collection("Companies");
+    const collection = await connectDB();
 
     const filter = {};
     if (name) filter.name = { $regex: new RegExp(name, 'i') };
     if (location) filter.location = { $regex: new RegExp(location, 'i') };
-    if (skill) filter['hiringCriteria.skills'] = { $in: [skill] };
+    if (skill) filter['hiringCriteria.skills'] = { $regex: new RegExp(skill, 'i') };
 
-    const total = await coll.countDocuments(filter);
+    const total = await collection.countDocuments(filter);
 
     return NextResponse.json({ total }, { status: 200 });
   } catch (err) {

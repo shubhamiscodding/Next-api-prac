@@ -1,6 +1,6 @@
 // app/api/companies/headcount-range/route.js
-import clientPromise from '../../../lib/mongodb';
 import { NextResponse } from 'next/server';
+import { connectDB } from '../../../lib/mongodb';
 
 export async function GET(request) {
   try {
@@ -8,14 +8,14 @@ export async function GET(request) {
     const min = parseInt(url.searchParams.get('min')) || 0;
     const max = url.searchParams.get('max') ? parseInt(url.searchParams.get('max')) : null;
 
-    const client = await clientPromise;
-    const db = client.db();
-    const coll = db.collection("Companies");
+    const collection = await connectDB();
 
     const filter = { headcount: { $gte: min } };
-    if (max !== null) filter.headcount.$lte = max;
+    if (max !== null) {
+      filter.headcount.$lte = max;
+    }
 
-    const items = await coll.find(filter).toArray();
+    const items = await collection.find(filter).toArray();
 
     return NextResponse.json({ items }, { status: 200 });
   } catch (err) {

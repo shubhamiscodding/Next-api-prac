@@ -1,16 +1,13 @@
 // app/api/companies/by-location/[location]/route.js
-import clientPromise from '../../../../lib/mongodb';
 import { NextResponse } from 'next/server';
+import { connectDB } from '../../../../lib/mongodb';
 
 export async function GET(request, { params }) {
   try {
     const { location } = params;
+    const collection = await connectDB();
 
-    const client = await clientPromise;
-    const db = client.db();
-    const coll = db.collection("Companies");
-
-    const items = await coll.find({
+    const items = await collection.find({
       location: { $regex: new RegExp(location, 'i') }
     }).toArray();
 
